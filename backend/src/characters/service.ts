@@ -53,7 +53,6 @@ class CharactersService {
 
           const actor_id = actorMap.get(castMember.name);
           if (!actor_id) {
-            // logger.warn(`Skipping ${castMember.name} (not in actor map)`);
             continue;
           }
           const normalizedName = normalizeCharacterName(castMember.character);
@@ -69,7 +68,6 @@ class CharactersService {
               });
             } catch (error: any) {
               if (error.code === "23505") {
-                // Race condition safety: fetch again
                 characterRecord = await getCharacterByName(normalizedName);
                 if (!characterRecord) throw error;
               } else {
@@ -123,7 +121,7 @@ class CharactersService {
       logger.info(`🎭 Cache miss: ${key}, fetching from DB...`);
       const result = await fetchCharactersWithMultipleActors(limit, character);
 
-      await cache.set(key, JSON.stringify(result), "EX", 60 * 60); // 1 hour TTL
+      await cache.set(key, JSON.stringify(result), "EX", 60 * 60);
       return result;
     } catch (error) {
       logger.error("❌ Failed to fetch characters with multiple actors", error);

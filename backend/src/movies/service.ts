@@ -41,7 +41,7 @@ class MoviesService {
             const data = response.data;
 
             const movie: Movie = {
-              id: data.id, // optional local ID, not used in insertion
+              id: data.id,
               tmdb_id: data.id,
               title: data.title,
               release_date: data.release_date,
@@ -82,7 +82,7 @@ class MoviesService {
       }
 
       const result = await fetchMoviesPerActor(limit, actor);
-      await cache.set(cacheKey, JSON.stringify(result), "EX", 60 * 10); // 10 minutes
+      await cache.set(cacheKey, JSON.stringify(result), "EX", 60 * 10);
       return result;
     } catch (error) {
       logger.error("❌ Failed to fetch movies per actor", error);

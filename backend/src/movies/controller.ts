@@ -13,7 +13,6 @@ const MAX_MOVIES = parseInt(process.env.MAX_MOVIES ?? "100");
  */
 export const moviesPerActor = asyncHandler(
   async (req: Request, res: Response) => {
-    // Validate request parameters
     await query("actor").isString().optional().run(req);
     await query("limit").isNumeric().optional().run(req);
     const errors = validationResult(req);

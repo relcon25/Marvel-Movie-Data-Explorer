@@ -10,7 +10,6 @@ export async function moviesPerActor(
     let params: (string | number)[];
 
     if (actor) {
-      // ✅ Filter by actor
       query = `
         SELECT
           a.name AS actor_name,
@@ -24,7 +23,6 @@ export async function moviesPerActor(
       `;
       params = [actor, limit];
     } else {
-      // ✅ Get all actors
       query = `
         SELECT
           a.name AS actor_name,

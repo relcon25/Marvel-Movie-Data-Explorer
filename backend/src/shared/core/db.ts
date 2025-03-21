@@ -3,7 +3,7 @@ import { Pool, QueryConfig, QueryResult, QueryResultRow } from "pg";
 import logger from "./logger";
 
 const MAX_RETRIES = 5;
-const RETRY_INTERVAL = 3000; // 3 seconds
+const RETRY_INTERVAL = 3000
 
 const pgConfig = {
   user: process.env.PG_USER,
@@ -35,7 +35,6 @@ async function queryWithLog<R extends QueryResultRow = any>(
   return result;
 }
 
-// Extend the client with the custom method
 interface DBClient extends Pool {
   queryWithLog: typeof queryWithLog;
 }

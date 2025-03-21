@@ -27,7 +27,7 @@ export async function createActor(actor: {
          VALUES ($1, $2)
            ON CONFLICT (tmdb_id) 
        DO UPDATE SET name = EXCLUDED.name
-                       RETURNING *;`, // ✅ Return all columns, avoiding another query
+                       RETURNING *;`,
       [actor.name, actor.tmdb_id],
     );
 
