@@ -35,7 +35,7 @@ export async function moviesPerActor(limit: number, actor?: string): Promise<Rec
       params = [limit];
     }
 
-    const result = await client.query(query, params);
+    const result = await client.queryWithLog(query, params);
 
     const actorMovieMap: Record<string, string[]> = {};
     result.rows.forEach(row => {
@@ -54,7 +54,7 @@ export async function moviesPerActor(limit: number, actor?: string): Promise<Rec
  */
 export async function createMovie(movie: Movie): Promise<Movie | null> {
   try {
-    const movieResult = await client.query(
+    const movieResult = await client.queryWithLog(
         `INSERT INTO movies (tmdb_id, title, release_date)
        VALUES ($1, $2, $3) 
        ON CONFLICT (tmdb_id) DO UPDATE SET 
@@ -76,7 +76,7 @@ export async function createMovie(movie: Movie): Promise<Movie | null> {
  */
 export async function getAllMovies(): Promise<Movie[]> {
   try {
-    const result = await client.query(`
+    const result = await client.queryWithLog(`
       SELECT id, tmdb_id, title, release_date
       FROM movies
       ORDER BY release_date DESC;
@@ -101,7 +101,7 @@ export async function insertMovieCharacterRelations(
       .join(",");
 
   try {
-    await client.query(`
+    await client.queryWithLog(`
       INSERT INTO movie_character (movie_id, character_id)
       VALUES ${values}
       ON CONFLICT DO NOTHING;
@@ -126,7 +126,7 @@ export async function insertMovieActorRelations(
       .join(",");
 
   try {
-    await client.query(`
+    await client.queryWithLog(`
       INSERT INTO movie_actor (movie_id, actor_id)
       VALUES ${values}
       ON CONFLICT DO NOTHING;

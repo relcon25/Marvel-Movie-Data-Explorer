@@ -6,7 +6,7 @@ import { Actor } from "./dto";
  * Get an actor by name.
  */
 export async function getActorByName(name: string): Promise<Actor | null> {
-  const result = await client.query(
+  const result = await client.queryWithLog(
     `SELECT id, name, tmdb_id FROM actors WHERE name = $1;`,
     [name],
   );
@@ -22,7 +22,7 @@ export async function createActor(actor: {
   tmdb_id: number;
 }): Promise<Actor> {
   try {
-    const result = await client.query(
+    const result = await client.queryWithLog(
       `INSERT INTO actors (name, tmdb_id)
          VALUES ($1, $2)
            ON CONFLICT (tmdb_id) 
@@ -57,7 +57,7 @@ export async function getActorsWithMultipleCharacters(
 
   params.push(limit);
 
-  const result = await client.query(`
+  const result = await client.queryWithLog(`
     SELECT 
       a.name AS actor_name,
       json_agg(DISTINCT jsonb_build_object(

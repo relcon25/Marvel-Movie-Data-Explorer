@@ -5,10 +5,11 @@ import {
   createActor,
   getActorsWithMultipleCharacters as fetchActorsWithMultipleCharacters,
 } from "./repository";
-import { ALLOWED_ACTORS } from "./constants"; // Predefined list of actors
+import { ALLOWED_ACTORS } from "./constants";
 import { Actor, MovieActorRelation } from "./dto";
 import { insertMovieActorRelations } from "../movies/repository";
 import { Movie } from "../movies/dto";
+import cache from "../shared/core/cache";
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY;
 
@@ -68,9 +69,24 @@ class ActorsService {
   /**
    * Fetch actors who played multiple characters.
    */
-  async getActorsWithMultipleCharacters(limit:number, actor?: string) {
+
+  async getActorsWithMultipleCharacters(limit: number, actor?: string) {
+    const key = actor
+        ? `actors:multiple-characters:${actor}:${limit}`
+        : `actors:multiple-characters:all:${limit}`;
+
     try {
-      return await fetchActorsWithMultipleCharacters(limit, actor);
+      const cached = await cache.get(key);
+      if (cached) {
+        logger.info(`🎭 Cache hit: ${key}`);
+        return JSON.parse(cached);
+      }
+
+      logger.info(`🎭 Cache miss: ${key}, fetching from DB...`);
+      const result = await fetchActorsWithMultipleCharacters(limit, actor);
+
+      await cache.set(key, JSON.stringify(result), "EX", 60 * 60); // 1 hour TTL
+      return result;
     } catch (error) {
       logger.error("❌ Failed to fetch actors with multiple characters", error);
       throw error;

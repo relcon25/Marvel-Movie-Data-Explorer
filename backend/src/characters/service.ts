@@ -8,7 +8,7 @@ import {
 import { MovieCharacterRelation, TmdbCharacter } from "./dto";
 import { insertMovieCharacterRelations } from "../movies/repository";
 import { Movie } from "../movies/dto";
-
+import cache from "../shared/core/cache";
 const TMDB_API_KEY = process.env.TMDB_API_KEY;
 function normalizeCharacterName(name: string): string {
   return name
@@ -94,9 +94,23 @@ class CharactersService {
   /**
    * Fetch characters played by multiple actors.
    */
-  async getCharactersWithMultipleActors(limit:number, character?: string) {
+  async getCharactersWithMultipleActors(limit: number, character?: string) {
+    const key = character
+        ? `characters:multiple-actors:${character}:${limit}`
+        : `characters:multiple-actors:all:${limit}`;
+
     try {
-      return await fetchCharactersWithMultipleActors(limit, character);
+      const cached = await cache.get(key);
+      if (cached) {
+        logger.info(`🎭 Cache hit: ${key}`);
+        return JSON.parse(cached);
+      }
+
+      logger.info(`🎭 Cache miss: ${key}, fetching from DB...`);
+      const result = await fetchCharactersWithMultipleActors(limit, character);
+
+      await cache.set(key, JSON.stringify(result), "EX", 60 * 60); // 1 hour TTL
+      return result;
     } catch (error) {
       logger.error("❌ Failed to fetch characters with multiple actors", error);
       throw error;

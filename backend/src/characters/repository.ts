@@ -8,7 +8,7 @@ import { Character, TmdbCharacter } from "./dto";
 export async function getCharacterByName(
   name: string,
 ): Promise<Character | null> {
-  const result = await client.query(
+  const result = await client.queryWithLog(
     `SELECT id, name, tmdb_id FROM characters WHERE name = $1;`,
     [name],
   );
@@ -23,7 +23,7 @@ export async function createCharacter(
   character: TmdbCharacter,
 ): Promise<Character> {
   try {
-    const result = await client.query(
+    const result = await client.queryWithLog(
       `INSERT INTO characters (name, tmdb_id) 
        VALUES ($1, $2) 
        ON CONFLICT (tmdb_id) 
@@ -83,7 +83,7 @@ export async function getCharactersWithMultipleActors(
       params = [limit];
     }
 
-    const result = await client.query(query, params);
+    const result = await client.queryWithLog(query, params);
 
     const map: Record<string, { movieName: string; actorName: string }[]> = {};
     for (const row of result.rows) {
@@ -107,7 +107,7 @@ export async function insertActorCharacterRelations(
       .join(",");
 
   try {
-    await client.query(`
+    await client.queryWithLog(`
       INSERT INTO actor_character (actor_id, character_id, movie_id)
       VALUES ${values}
       ON CONFLICT DO NOTHING;
