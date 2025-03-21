@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { fetchActorsWithMultipleCharacters } from "../api/actorsWithMultipleCharacters";
-import {Actor} from "../types";
+import {ActorRole} from "../types";
 
 export function useActorsWithMultipleCharacters() {
-    const [actors, setActors] = useState<Record<string, { movieName: string; characterName: string }[]> >({});
+    const [actors, setActors] = useState<Record<string, ActorRole[]> >({});
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
