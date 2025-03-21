@@ -44,8 +44,8 @@ export async function createActor(actor: {
  * Fetch all actors who have played multiple characters.
  */
 export async function getActorsWithMultipleCharacters(
-    limit: number,
-    actor?: string,
+  limit: number,
+  actor?: string,
 ): Promise<Record<string, { movieName: string; characterName: string }[]>> {
   const params: (string | number)[] = [];
   let filter = "";
@@ -57,7 +57,8 @@ export async function getActorsWithMultipleCharacters(
 
   params.push(limit);
 
-  const result = await client.queryWithLog(`
+  const result = await client.queryWithLog(
+    `
     SELECT 
       a.name AS actor_name,
       json_agg(DISTINCT jsonb_build_object(
@@ -72,13 +73,15 @@ export async function getActorsWithMultipleCharacters(
     GROUP BY a.name
     HAVING COUNT(DISTINCT c.id) > 1
     LIMIT $${params.length};
-  `, params);
+  `,
+    params,
+  );
 
-  const map: Record<string, { movieName: string; characterName: string }[]> = {};
+  const map: Record<string, { movieName: string; characterName: string }[]> =
+    {};
   for (const row of result.rows) {
     map[row.actor_name] = row.roles;
   }
 
   return map;
 }
-

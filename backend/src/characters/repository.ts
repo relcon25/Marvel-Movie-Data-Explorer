@@ -45,12 +45,12 @@ export async function createCharacter(
  * Fetch characters played by multiple actors.
  */
 export async function getCharactersWithMultipleActors(
-    limit: number,
-    character?: string
+  limit: number,
+  character?: string,
 ): Promise<Record<string, { movieName: string; actorName: string }[]>> {
   try {
     let query: string;
-    let params: any[];
+    let params: (string | number)[];
 
     if (character) {
       query = `
@@ -98,13 +98,16 @@ export async function getCharactersWithMultipleActors(
 }
 
 export async function insertActorCharacterRelations(
-    triples: { actor_id: number; character_id: number; movie_id: number }[]
+  triples: { actor_id: number; character_id: number; movie_id: number }[],
 ): Promise<void> {
   if (triples.length === 0) return;
 
   const values = triples
-      .map(({ actor_id, character_id, movie_id }) => `(${actor_id}, ${character_id}, ${movie_id})`)
-      .join(",");
+    .map(
+      ({ actor_id, character_id, movie_id }) =>
+        `(${actor_id}, ${character_id}, ${movie_id})`,
+    )
+    .join(",");
 
   try {
     await client.queryWithLog(`

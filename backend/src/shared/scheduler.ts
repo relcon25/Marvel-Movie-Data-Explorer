@@ -34,8 +34,12 @@ export async function runScheduledTask() {
         );
 
         if (validMovies.length > 0) {
-          const { actorMap } = await actorsService.prefetchActorsFromMovies(movies);
-          await charactersService.prefetchCharactersFromMovies(movies, actorMap);
+          const { actorMap } =
+            await actorsService.prefetchActorsFromMovies(movies);
+          await charactersService.prefetchCharactersFromMovies(
+            movies,
+            actorMap,
+          );
 
           logger.info("🎬 Movies & 🎭 Actors updated successfully!");
         }

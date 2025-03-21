@@ -9,7 +9,7 @@ import {
 } from "./repository";
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY;
-import {ALLOWED_MOVIES} from "./constants";
+import { ALLOWED_MOVIES } from "./constants";
 
 const limit = pLimit(5);
 
@@ -22,40 +22,42 @@ class MoviesService {
     const fetchedMovies: Movie[] = [];
 
     await Promise.all(
-        movieEntries.map(([title, tmdb_id]) =>
-            limit(async () => {
-              try {
-                interface TmdbMovieResponse {
-                  id: number;
-                  title: string;
-                  release_date: string;
-                }
+      movieEntries.map(([title, tmdb_id]) =>
+        limit(async () => {
+          try {
+            interface TmdbMovieResponse {
+              id: number;
+              title: string;
+              release_date: string;
+            }
 
-                const response = await axios.get<TmdbMovieResponse>(
-                    `https://api.themoviedb.org/3/movie/${tmdb_id}`,
-                    {
-                      headers: { Authorization: `Bearer ${TMDB_API_KEY}` },
-                    }
-                );
+            const response = await axios.get<TmdbMovieResponse>(
+              `https://api.themoviedb.org/3/movie/${tmdb_id}`,
+              {
+                headers: { Authorization: `Bearer ${TMDB_API_KEY}` },
+              },
+            );
 
-                const data = response.data;
+            const data = response.data;
 
-                const movie: Movie = {
-                  id: data.id, // optional local ID, not used in insertion
-                  tmdb_id: data.id,
-                  title: data.title,
-                  release_date: data.release_date,
-                };
+            const movie: Movie = {
+              id: data.id, // optional local ID, not used in insertion
+              tmdb_id: data.id,
+              title: data.title,
+              release_date: data.release_date,
+            };
 
-                const inserted = await createMovie(movie);
-                if (inserted) {
-                  fetchedMovies.push(inserted);
-                }
-              } catch (error) {
-                logger.error(`❌ Failed to fetch or insert movie: ${title}`, { error: (error as Error).message });
-              }
-            })
-        )
+            const inserted = await createMovie(movie);
+            if (inserted) {
+              fetchedMovies.push(inserted);
+            }
+          } catch (error) {
+            logger.error(`❌ Failed to fetch or insert movie: ${title}`, {
+              error: (error as Error).message,
+            });
+          }
+        }),
+      ),
     );
 
     return fetchedMovies;
@@ -64,10 +66,13 @@ class MoviesService {
   /**
    * Fetch all actors and their movies (for /moviesPerActor).
    */
-  async moviesPerActor(limit: number, actor?: string): Promise<Record<string, string[]>> {
+  async moviesPerActor(
+    limit: number,
+    actor?: string,
+  ): Promise<Record<string, string[]>> {
     const cacheKey = actor
-        ? `moviesPerActor:${actor}:${limit}`
-        : `moviesPerActor:all:${limit}`;
+      ? `moviesPerActor:${actor}:${limit}`
+      : `moviesPerActor:all:${limit}`;
 
     try {
       const cached = await cache.get(cacheKey);
@@ -84,7 +89,6 @@ class MoviesService {
       throw error;
     }
   }
-
 }
 
 export default new MoviesService();

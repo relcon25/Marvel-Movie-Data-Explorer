@@ -1,4 +1,4 @@
-# Quote of the Day App
+# Marvel Movies Explorer
 
 ## Table of Contents
 
@@ -14,60 +14,95 @@
 
 ## Overview
 
-This project implements a "Quotes of the Day" application where users can enter a number and receive a random list of quotes (with authors) retrieved from the FavQs API.
-The application also supports filtering by tags.
+This project implements a Marvel Movies Explorer application that allows users to explore connections between movies, characters, and actors from a selected subset of the Marvel Cinematic Universe (MCU). Data is retrieved from the TMDB API and stored in a local database.
+
+## Features
+
+- Fetch and cache Marvel movie metadata and credits from TMDB
+- Periodic refresh with Redis-based distributed locking
+- Filtered support for a predefined set of movies and actors
+- APIs to:
+   - List movies by actor
+   - Track character variants across movies
+   - Track actor careers and roles
+   - View character appearances by different actors
 
 ## Architecture
 
 1. **Data Fetching and Caching**:
-    - The backend periodically fetches quotes from the FavQs API.
-    - The quotes are saved in the database for persistence and cached in Redis for fast access.
+   - Movies and cast data are periodically fetched from TMDB.
+   - Data is stored in PostgreSQL and cached in Redis for fast read access.
 
 2. **API Endpoints**:
-    - A primary endpoint accepts a `count` parameter (and optionally pagination parameters - not implemented) to return a random set of quotes.
+   - `/moviesPerActor` – List movies per actor
+   - `/charactersWithMultipleActors` – Find characters played by different actors
+   - `/actorsWithMultipleCharacters` – Find actors with multiple roles
 
 3. **Distributed Scheduler**:
-    - Ensures that only one instance (in a distributed setup) refreshes the quotes cache using a Redis-based distributed lock.
+   - Runs every 5 hours using `node-cron`
+   - Uses a Redis-based distributed lock to ensure only one instance executes fetch/update logic
 
-4. **Frontend**:
-    - A simple React app where users can input a number, click a button, and view the random quotes with their authors.
+4. **Backend**:
+   - Node.js + Express, structured using DDD principles
+   - Flyway is used for managing PostgreSQL migrations
 
 ## Installation
 
 1. **Clone the Repository:**
 
-       git clone git@github.com:relcon25/quote-of-the-day.git
-       cd quote-of-the-day
+```bash
+git clone git@github.com:relcon25/quote-of-the-day.git
+cd quote-of-the-day
+```
 
 ## Configuration
 
-Create a `.env` file in your backend directory with the following variables (adjust values as needed):
+Create a `.env` file in your backend directory with the following variables:
 
-       PORT=3001
-       FAVQS_API_KEY=your_favqs_api_key
-       REDIS_HOST=redis
-       PG_USER=postgres
-       PG_HOST=postgres
-       PG_DATABASE=quote_of_day
-       PG_PASSWORD=password
-       PG_PORT=5432
-       MAX_QUOTES=500
-       QUOTES_PER_PAGE=50
+```
+PORT=3001
+FAVQS_API_KEY=your_favqs_api_key  # (optional if using quote fallback)
+REDIS_HOST=redis
+PG_USER=postgres
+PG_HOST=postgres
+PG_DATABASE=marvel_movies
+PG_PASSWORD=password
+PG_PORT=5432
+MAX_QUOTES=500
+TMDB_API_KEY=your_tmdb_api_key
+```
 
-Create a `.env` file in you frontend directory with:
+Frontend `.env`:
 
-       REACT_APP_API_BASE_URL=http://localhost:3001/v1/api
+```
+REACT_APP_API_BASE_URL=http://localhost:3001/v1/api
+```
 
 ## Running the Application
 
 Run the following command from the project root:
 
-       docker-compose up --build
+```bash
+docker-compose up --build
+```
 
-This will start all services (backend, frontend, Redis, postgres, and Flyway migrations).
-Now you can go to:
+This will start all services (backend, Redis, PostgreSQL, migrations).
 
-       http://localhost:3000
+Then open your browser at:
 
-and found the app.
-Enjoy :)
+```
+http://localhost:3000
+```
+
+Enjoy exploring Marvel movie data ✨
+
+## Notes
+
+- Only a selected list of Marvel movies and actors are supported in the MVP.
+- Arbitrary searches are disabled.
+- Redis cache expires every 5 hours and is refreshed via scheduler.
+
+## License
+
+MIT
+

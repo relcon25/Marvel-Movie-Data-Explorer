@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "scripts": {
     "reformat-code": "npm run lint:fix&&npm run format",
-    "lint": "eslint 'backend/src/**/*.ts'",
+    "lint": "npx eslint 'backend/src/**/*.ts'",
     "lint:fix": "eslint './**/*.ts' --fix",
-    "format": "prettier --write './**/*.ts'",
+    "format": "npx prettier --write './**/*.ts'",
     "build": "tsc",
     "dev": "ts-node-dev --respawn src/app.ts",
     "watch": "tsc --watch",

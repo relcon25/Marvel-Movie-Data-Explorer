@@ -7,11 +7,13 @@ import {
 } from "./repository";
 import { ALLOWED_ACTORS } from "./constants";
 import { Actor, MovieActorRelation } from "./dto";
-import { insertMovieActorRelations } from "../movies/repository";
+import { insertMovieActorRelations, fetchActors } from "../movies/repository";
 import { Movie } from "../movies/dto";
 import cache from "../shared/core/cache";
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY;
+const ACTORS_CACHE_KEY = "actors_list";
+const CACHE_TTL = 60 * 60; // Cache for 1 hour
 
 class ActorsService {
   /**
@@ -27,15 +29,15 @@ class ActorsService {
     for (const movie of movies) {
       try {
         const response = await axios.get(
-            `https://api.themoviedb.org/3/movie/${movie.tmdb_id}/credits`,
-            {
-              headers: { Authorization: `Bearer ${TMDB_API_KEY}` },
-            }
+          `https://api.themoviedb.org/3/movie/${movie.tmdb_id}/credits`,
+          {
+            headers: { Authorization: `Bearer ${TMDB_API_KEY}` },
+          },
         );
 
         const credits = response.data as { cast: Array<Actor> };
         const actors = credits.cast.filter((actor) =>
-            ALLOWED_ACTORS.includes(actor.name)
+          ALLOWED_ACTORS.includes(actor.name),
         );
 
         for (const actor of actors) {
@@ -56,7 +58,10 @@ class ActorsService {
           });
         }
       } catch (error) {
-        logger.error(`❌ Error fetching actors for movie ${movie.title}:`, error);
+        logger.error(
+          `❌ Error fetching actors for movie ${movie.title}:`,
+          error,
+        );
       }
     }
 
@@ -66,14 +71,34 @@ class ActorsService {
     return { actorMoviePairs, actorMap };
   }
 
+  async getActors() {
+    try {
+      const cachedActors = await cache.get(ACTORS_CACHE_KEY);
+      if (cachedActors) {
+        logger.info("✅ Returning actors from cache");
+        return JSON.parse(cachedActors);
+      }
+
+      const actors = await fetchActors();
+
+      await cache.set(ACTORS_CACHE_KEY, JSON.stringify(actors), "EX", CACHE_TTL);
+      logger.info("🔄 Stored actors in cache");
+
+      return actors;
+    } catch (error) {
+      logger.error("❌ Failed to fetch actors", error);
+      throw error;
+    }
+  }
+
   /**
    * Fetch actors who played multiple characters.
    */
 
   async getActorsWithMultipleCharacters(limit: number, actor?: string) {
     const key = actor
-        ? `actors:multiple-characters:${actor}:${limit}`
-        : `actors:multiple-characters:all:${limit}`;
+      ? `actors:multiple-characters:${actor}:${limit}`
+      : `actors:multiple-characters:all:${limit}`;
 
     try {
       const cached = await cache.get(key);
@@ -85,7 +110,7 @@ class ActorsService {
       logger.info(`🎭 Cache miss: ${key}, fetching from DB...`);
       const result = await fetchActorsWithMultipleCharacters(limit, actor);
 
-      await cache.set(key, JSON.stringify(result), "EX", 60 * 60); // 1 hour TTL
+      await cache.set(key, JSON.stringify(result), "EX", CACHE_TTL);
       return result;
     } catch (error) {
       logger.error("❌ Failed to fetch actors with multiple characters", error);

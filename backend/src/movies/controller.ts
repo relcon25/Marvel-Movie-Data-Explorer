@@ -26,7 +26,10 @@ export const moviesPerActor = asyncHandler(
     const limit = (req.query.limit || MAX_MOVIES) as number;
 
     try {
-      const moviesPerActor = await moviesService.moviesPerActor(limit, actorName);
+      const moviesPerActor = await moviesService.moviesPerActor(
+        limit,
+        actorName,
+      );
       res.json(moviesPerActor);
     } catch (e) {
       logger.error("Failed to fetch movies for actor", (e as Error).message);

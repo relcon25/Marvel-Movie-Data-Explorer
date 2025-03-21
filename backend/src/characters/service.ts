@@ -1,38 +1,47 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from "axios";
 import logger from "../shared/core/logger";
 import {
   getCharacterByName,
   createCharacter,
-  getCharactersWithMultipleActors as fetchCharactersWithMultipleActors, insertActorCharacterRelations,
+  getCharactersWithMultipleActors as fetchCharactersWithMultipleActors,
+  insertActorCharacterRelations,
 } from "./repository";
-import { MovieCharacterRelation, TmdbCharacter } from "./dto";
+import { MovieCharacterRelation } from "./dto";
 import { insertMovieCharacterRelations } from "../movies/repository";
 import { Movie } from "../movies/dto";
 import cache from "../shared/core/cache";
 const TMDB_API_KEY = process.env.TMDB_API_KEY;
 function normalizeCharacterName(name: string): string {
   return name
-      .split("/")[0]             // keep only the first part before '/'
-      .replace(/\(.*?\)/g, "")   // remove things like (uncredited), (voice)
-      .replace(/ +/g, " ")       // normalize multiple spaces
-      .trim();                   // remove leading/trailing whitespace
+    .split("/")[0] // keep only the first part before '/'
+    .replace(/\(.*?\)/g, "") // remove things like (uncredited), (voice)
+    .replace(/ +/g, " ") // normalize multiple spaces
+    .trim(); // remove leading/trailing whitespace
 }
 class CharactersService {
   /**
    * Fetch characters from movies and insert character-movie relationships.
    */
-  async prefetchCharactersFromMovies(movies: Movie[], actorMap: Map<string, number>) {
-    console.log('actorMap', {actorMap})
+  async prefetchCharactersFromMovies(
+    movies: Movie[],
+    actorMap: Map<string, number>,
+  ) {
+    console.log("actorMap", { actorMap });
     const characterMoviePairs: MovieCharacterRelation[] = [];
-    const actorCharacterPairs: { actor_id: number; character_id: number; movie_id: number }[] = [];
+    const actorCharacterPairs: {
+      actor_id: number;
+      character_id: number;
+      movie_id: number;
+    }[] = [];
 
     for (const movie of movies) {
       try {
         const response = await axios.get(
-            `https://api.themoviedb.org/3/movie/${movie.tmdb_id}/credits`,
-            {
-              headers: { Authorization: `Bearer ${TMDB_API_KEY}` },
-            }
+          `https://api.themoviedb.org/3/movie/${movie.tmdb_id}/credits`,
+          {
+            headers: { Authorization: `Bearer ${TMDB_API_KEY}` },
+          },
         );
 
         const credits = response.data as {
@@ -47,7 +56,7 @@ class CharactersService {
             // logger.warn(`Skipping ${castMember.name} (not in actor map)`);
             continue;
           }
-          let normalizedName = normalizeCharacterName(castMember.character);
+          const normalizedName = normalizeCharacterName(castMember.character);
           console.log("Normalized character name:", normalizedName);
 
           let characterRecord = await getCharacterByName(normalizedName);
@@ -59,7 +68,7 @@ class CharactersService {
                 credit_id: castMember.credit_id,
               });
             } catch (error: any) {
-              if (error.code === '23505') {
+              if (error.code === "23505") {
                 // Race condition safety: fetch again
                 characterRecord = await getCharacterByName(normalizedName);
                 if (!characterRecord) throw error;
@@ -81,14 +90,19 @@ class CharactersService {
           });
         }
       } catch (error) {
-        logger.error(`❌ Error fetching characters for movie ${movie.title}`, error);
+        logger.error(
+          `❌ Error fetching characters for movie ${movie.title}`,
+          error,
+        );
       }
     }
 
     await insertMovieCharacterRelations(characterMoviePairs);
     await insertActorCharacterRelations(actorCharacterPairs);
 
-    logger.info(`✅ Inserted ${characterMoviePairs.length} movie-character and ${actorCharacterPairs.length} actor-character links.`);
+    logger.info(
+      `✅ Inserted ${characterMoviePairs.length} movie-character and ${actorCharacterPairs.length} actor-character links.`,
+    );
   }
 
   /**
@@ -96,8 +110,8 @@ class CharactersService {
    */
   async getCharactersWithMultipleActors(limit: number, character?: string) {
     const key = character
-        ? `characters:multiple-actors:${character}:${limit}`
-        : `characters:multiple-actors:all:${limit}`;
+      ? `characters:multiple-actors:${character}:${limit}`
+      : `characters:multiple-actors:all:${limit}`;
 
     try {
       const cached = await cache.get(key);

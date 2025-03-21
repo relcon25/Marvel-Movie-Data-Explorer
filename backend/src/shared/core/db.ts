@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Pool, QueryConfig, QueryResult, QueryResultRow } from "pg";
 import logger from "./logger";
 
@@ -18,10 +19,11 @@ const client = new Pool(pgConfig);
  * Logs and executes a DB query
  */
 async function queryWithLog<R extends QueryResultRow = any>(
-    queryTextOrConfig: string | QueryConfig<any[]>,
-    values?: any[],
+  queryTextOrConfig: string | QueryConfig<any[]>,
+  values?: any[],
 ): Promise<QueryResult<R>> {
-  const sql = typeof queryTextOrConfig === "string"
+  const sql =
+    typeof queryTextOrConfig === "string"
       ? queryTextOrConfig
       : queryTextOrConfig.text;
 
