@@ -1,9 +1,12 @@
 services:
   frontend:
     build:
-      context: ./frontend
-    container_name: frontend
+      context: ./client
+    container_name: client
     restart: always
+    volumes:
+      - ./client:/app  # Mount the project folder into the container
+      - /app/node_modules
     environment:
       - CHOKIDAR_USEPOLLING=true
     ports:
@@ -13,7 +16,7 @@ services:
 
   backend:
     build: ./backend
-    container_name: quote-of-day
+    container_name: marvel-movies-explorer
     ports:
       - "3001:3001"
       - "9229:9229"
@@ -35,7 +38,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: quote_of_day
+      POSTGRES_DB: marvel_movies
     ports:
       - "5432:5432"
     volumes:
@@ -59,7 +62,7 @@ services:
     volumes:
       - ./backend/migrations:/flyway/sql
     environment:
-      - FLYWAY_URL=jdbc:postgresql://postgres:5432/quote_of_day
+      - FLYWAY_URL=jdbc:postgresql://postgres:5432/marvel_movies
       - FLYWAY_USER=postgres
       - FLYWAY_PASSWORD=password
       - FLYWAY_LOCATIONS=filesystem:/flyway/sql
